@@ -1,0 +1,57 @@
+#!/bin/bash
+
+
+
+
+function mainMenu 
+{
+	printf "\nPlease choose one of the following options:\n"
+	printf "\n\t1. Add a new entry\n"
+	printf "\n\t2. Search for an entry\n"
+	printf "\n\t3. Remove an existing entry\n"
+	printf "\n\t__________________________________________\n"
+	printf "\n\t0. Exit\n"
+
+	printf  "\nChoose an option: "
+	read userChoice
+	inputValid
+}
+
+function inputValid 
+{
+	if ! [[ $userChoice =~ ^-?[0-9]+$ ]]; then
+		printf "\nString not allowed. Please choose form above mentioned options. \n"
+		printf "\nReturning to Main menu ...."
+		sleep 1.5
+		mainMenu
+
+	elif [ $userChoice -le -1 ] || [ $userChoice -ge 4 ]; then
+		printf "\nInvalid option chosen. Please choose between 0-4\n"
+		printf "\nReturning to Main menu ...."
+		sleep 1.5
+		mainMenu
+
+	else
+		runMenu
+	fi
+}
+
+
+
+function runMenu
+{
+	while [ $userChoice -ne 0 ]
+	do		
+		case $userChoice in
+	        	1) ./AddEntry ;;
+	        	2) ./FindEntry ;;
+	        	3) ./RmvEntry ;;
+		esac
+		printf "\n\tReturning to main menu..."
+		sleep 1.5
+		mainMenu
+	done
+	printf "\nExiting... \n"
+	exit 1
+} 
+mainMenu

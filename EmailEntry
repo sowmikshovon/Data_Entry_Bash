@@ -1,0 +1,159 @@
+#!/bin/bash
+# Kevin Fan (26/24/17)
+# Description: This script allows the user to search for an existing email 
+# and enter a message subject and message text to send the email 
+
+# clear the terminal
+clear
+
+# A function that serves as the first menu that the script calls. This function gives options to the user
+# to email all customers or to search for a matching email
+function emailMenu 
+{	
+	# Local variable to control while loop
+	validChoice=false
+	while [[ $validChoice = false ]]; do
+		printf "\n\t1. Email all entries\n"
+		printf "\n\t2. Search by email\n"
+		printf "\n\t3. Search by name\n"
+		printf "\n\t4. Search by alias\n"
+		printf "\n\t5. Search by address\n"
+		printf "\n\t6. Search by phone number\n"
+		printf "\n\t===========================\n"
+		printf "\n\t0. Exit\n"
+		printf "\nEnter a number: "
+		read choice 
+		clear
+		# Case statement for relevant options
+		case $choice in
+			# When users enter 1, awk search the @ symabal from only the email field and to assign all emails to emailAddresses variable.
+			# Set validChoice variable to valid to exit loop and call the email function
+			1)	emailAddresses=$(awk -v search="$@" '$1 ~ search {print $1}' EntryDetails )
+				validChoice=valid
+				email ;;
+			# When user enter 2, set validChoice variable to valid to exit loop and call the readInput function to allow user to enter details for search
+			2)	printf "Enter the email to search for: "
+				searchAndDisplay 1 ;;
+			3)	printf "Enter the name to search for: "
+				searchAndDisplay 2 ;;
+			4)	printf "Enter the alias to search for: "
+				searchAndDisplay 3 ;;
+			5)	printf "Enter the address to search for: "
+				searchAndDisplay 4 ;;
+			6)	printf "Enter the number to search for: "
+				searchAndDisplay 5 ;;
+			0)	validChoice=valid ;;
+			*)	printf "Not a valid option" ;;
+		esac
+	done
+}
+
+# Function that takes in a passed in variable to search for a specific column on CustomerDetails (minimize code duplication)
+# (i.e if 1 is passed in, only the email column is searched, if 2 is passed in, only the name column is searched etc)
+function searchAndDisplay 
+{
+	# Assign the validChoice variable from the emailMEenu to valid to exit emailMenu loop
+	validChoice=valid
+	# Incoming number/paramenter is assigned to variable called incomingNum
+	incomingNum="$1"
+	# A variable string that concatenates the incoming variable to form a string - used in the awk count 
+	searchString=("\$$incomingNum ~ search")
+	# A variable string that concatenates the searchString variable to form a string - used in the awk display
+	displayString=("$searchString {print \$1}")
+	# Reads in the search by the user
+	read searchTerm
+	# Converts the search term to all lowercase - to perform a case insensitive search
+	lowerCaseInput=${searchTerm,,}
+	# A variable that uses awk, the lowerCaseInput variable and the searchString variable with the wc -l to count the number of line
+	searchCount=$(awk -v search="$lowerCaseInput" "$searchString" EntryDetails | wc -l) 
+	# A variable that stores the email result from the lowerCaseInput 
+	searchResult=$(awk -v search="$lowerCaseInput" "$displayString" EntryDetails) 
+	# call the checkInput to validate the searchTerm
+	checkInput 
+}
+
+# Function that checks the search term input and displays relevant options
+function checkInput
+{
+	# If no input is detected, the emailMenu function is called again for user to re-enter
+	if [ -z $lowerCaseInput ]; then
+		printf "\nNo entry detected. Please re-enter search term"
+		emailMenu
+	# If matches are found, the number of matches and the matching emails are displayed. Matching emails from an awk search of the emails only are 
+	# assigned to the emailAddresses variabl and the actionAfterSearch is called
+	elif [[ $searchCount -ne 0 ]]; then
+		clear
+		printf "\n$searchCount matches were found:\n"
+		emailAddresses=$searchResult
+		printf "\n$searchResult"
+		actionAfterSearch
+	# If no matches are found, display message and the actionAfterSearch is called
+	elif [[ $searchCount -eq 0 ]]; then
+		clear
+		printf "\nNo matches were found\n"
+		actionAfterSearch
+	fi
+}
+
+# Function that displays options for user after the first search
+# Users can perform another search or return to main menu
+# If an invalid option is entered, the script returns the the main menu
+function actionAfterSearch
+{
+	# Local variable to control while loop
+	validChoice=false;
+	while [[ $validChoice = false ]]; do
+		printf "\n\t1) Email to these address\n"
+		printf "\n\t2) Perform another search\n"
+		printf "\n\t============================\n"
+		printf "\n\t0) Exit to main menu\n"
+		printf "\nEnter choice: "
+		read choice
+		clear
+			case $choice in
+				# When user enter 1, set validChoice variable to valid to exit loop and call the email function to construct email
+				1)	validChoice=valid
+					email ;;
+				# When user enter 2, set validChoice variable to valid to exit loop and call the readInput function to allow user to enter details for search
+				2)	validChoice=valid
+					emailMenu ;;
+				# When user enter 0, set validChoice variable to valid to exit loop and return to menu script
+				0)	validChoice=valid ;;
+				# All other cases, print out invalid option
+				*)	printf "\nNot a valid option\n" ;;
+			esac
+	done
+}
+
+# Function that constructs the email
+function email
+{
+	# While loop that continually loops until the message is non-blank
+	while [[ -z $message ]]; do
+		printf "\n\tEnter the email message: "
+		read message
+	done
+
+	# While loop that continually loops until the emailSubject is non-blank
+	while [[ -z $emailSubject ]]; do
+		printf "\n\tEnter the email subject: "
+		read emailSubject
+	done
+
+	# Until loop that continually loops until the option entered is Y or N
+	until [[ ${option^^} = 'Y' || ${option^^} = 'N' ]]; do
+		printf "\nSend email (Y/N): "
+		read option
+	done
+
+	# If/Else statement that sends the email or discard the email depending on the user option
+	if [[ ${option^^} = 'Y' ]]; then
+		echo $message | mail -s $emailSubject $emailAddresses 
+		printf "\nEmail sent"
+	elif [[ ${option^^} = 'N' ]]; then
+		printf "\nEmail discarded"
+	fi
+}
+
+# Calls the emailMenu function that begins the loop
+emailMenu

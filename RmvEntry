@@ -1,0 +1,87 @@
+#!/bin/bash
+
+
+
+
+
+function readInput 
+{
+	printf "\nPlease enter name or nickname of the entry you wish to remove:  "
+
+	read input
+
+	lowerCaseInput=${input,,}
+
+	searchCount=$(awk -v search="$lowerCaseInput" '$2 ~ search || $3 ~ search' EntryDetails | wc -l)
+
+	checkInput
+}
+
+
+
+function checkInput
+{
+	if [ -z $lowerCaseInput ]; then
+		printf "\n\tNo entry detected. Please re-enter search term"
+		readInput
+
+	elif [[ $searchCount -ne 0 ]]; then
+		printf "\n$searchCount match(s) were found:\n"
+		awk -v search="$lowerCaseInput" '$2 ~ search || $3 ~ search' EntryDetails
+		actionAfterSearch
+	elif [[ $searchCount -eq 0 ]]; then
+		printf "\nNo matches were found\n"
+		actionAfterSearch
+	fi
+}
+
+
+
+function actionAfterSearch
+{
+	validChoice=false;
+	while [[ $validChoice = false ]]; do
+		printf "\n\t1) Remove all matching entries found\n"
+		printf "\n\t2) Perform another search\n"
+		printf "\n\t______________________________________\n"
+		printf "\n\t0) Return to Main Menu\n"
+		printf "\nEnter choice: "
+		read choice
+			if ! [[ $choice =~ ^-?[0-9]+$ ]]; then
+				printf "\nString not allowed. Please enter above mentioned option\n"
+			elif [ $choice -le -1 ] || [ $choice -ge 3 ]; then
+				printf "\nInvalid number entered\n"
+			elif [[ $choice -eq 1 ]]; then
+				validChoice=valid
+				removeInput
+			elif [[ $choice -eq 2 ]]; then
+				validChoice=valid
+				readInput
+			else
+				validChoice=valid
+			fi
+	done
+}
+
+
+function removeInput
+{
+	until [[ ${choice^^} = 'Y' || ${choice^^} = 'N' ]]; do
+		printf "\nRemove entry (Y/N):"
+		read choice
+	done
+
+	if [[ ${choice^^} = 'Y' ]]; then
+		awk -v search="$lowerCaseInput" '!($2 ~ search) && !($3 ~ search)' EntryDetails > /tmp/EntryDetails
+
+		mv /tmp/EntryDetails EntryDetails
+		printf "\nEntry Details successfully removed\n"
+		sleep 1.5
+	elif [[ ${choice^^} = 'N' ]]; then
+		printf "\nNo Entries removed"
+		sleep 1.5
+	fi
+}
+
+readInput
+

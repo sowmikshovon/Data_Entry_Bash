@@ -1,0 +1,46 @@
+#!/bin/bash
+
+
+ 
+function readInput
+{
+	printf "\nPlease enter any of the entry's information to search for: "
+
+	read input
+	checkInput
+}
+
+function checkInput
+{
+	if [ -z $input ]; then
+		printf "\n\tNo entry detected. Please re-enter search term\n"
+		readInput
+	elif [[ $(grep -i -c $input EntryDetails) -ne 0 ]]; then
+		printf "\n$(grep -i -c $input EntryDetails) match(s) were found:\n"
+		grep -i $input EntryDetails 
+		actionAfterSearch
+	elif [[ $(grep -i -c $input EntryDetails) -eq 0 ]]; then
+		printf "\nNo match(s) were found\n"
+		actionAfterSearch
+	fi
+}
+
+
+function actionAfterSearch
+{
+	validChoice=false
+	while [[ $validChoice = false ]]; do
+		printf "\nPerform another search (Y/N):"
+		read choice
+		if [[ ${choice^^} = 'Y' ]]; then
+			validChoice=valid
+			readInput
+		elif [[ ${choice^^} = 'N' ]]; then
+			validChoice=valid
+		else
+			printf "\nNot a valid option"
+		fi
+	done
+}
+
+readInput

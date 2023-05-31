@@ -1,0 +1,88 @@
+#!/bin/bash
+
+
+
+
+
+if [ ! -f EntryDetails ]; then
+    touch EntryDetails
+fi
+
+
+
+function readEmail
+{
+	printf "Please enter the entry's email address: "
+	read email
+	validEmail
+}
+
+
+
+
+function validEmail
+{
+	validEmail=false
+	while [[ $validEmail = false ]]; do
+
+		if [[ $email != *@*.* ]]; then
+			printf "\n\tMust include '@' and '.' in an email.*\n"
+			readEmail
+		elif [[ $(grep -i -c $email EntryDetails) -ne 0 ]]; then
+			printf "\n\tEmail already used once\n"
+			readEmail
+		else
+			validEmail=valid
+		fi
+	done
+}
+
+
+
+
+function readPhoneNumber
+{
+	printf "\nPlease enter entry's phone Number: "
+	read phoneNumber
+	validNumber
+}
+
+
+
+
+function validNumber
+{
+	if ! [[ $phoneNumber =~ ^[0-9]+$ ]]; then
+		printf "\n\tInvalid phone number detected. Please re-renter.\n"
+		readPhoneNumber
+	fi
+}
+
+readEmail
+
+
+while [[ -z $name ]]; do
+	printf "\nPlease enter name: "
+	read name
+done
+
+
+while [[ -z $nickName ]]; do
+	printf "\nPlease enter nickname: "
+	read nickName
+done
+
+
+while [[ -z $address ]]; do
+	printf "\nPlease enter address: "
+	read address
+done
+
+ 
+readPhoneNumber
+
+
+echo "${email,,}	${name,,}	${nickName,,}	${address,,}	$phoneNumber" >> EntryDetails
+
+sort -o EntryDetails EntryDetails
+printf "\n\tEntry successfully added.\n"
